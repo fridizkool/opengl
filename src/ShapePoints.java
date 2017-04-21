@@ -3,7 +3,11 @@ public class ShapePoints
 	public float[] x;
 	public float[] y;
 	public float[] z;
+	public float[] nx;
+	public float[] ny;
+	public float[] nz;
 	public float[] texture;
+	public float[] side;
 	private int points;
 	private int cur;
 	

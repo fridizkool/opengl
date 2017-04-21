@@ -67,11 +67,24 @@ public class ColladaReader
 			doc = db.parse(file);
 			
 			NodeList nl = doc.getElementsByTagName("float_array");
-			readVertex(nl.item(0));
-			readNormal(nl.item(1));
-			readTexture(nl.item(2));
+			if(nl.getLength() > 0)
+			{
+				readVertex(nl.item(0));
+				if(nl.getLength() > 1)
+				{
+					readNormal(nl.item(1));
+					if(nl.getLength() > 2)
+						readTexture(nl.item(2));
+				}
+			}
 			
 			nl = doc.getElementsByTagName("polylist");
+			int count = 0;
+			for(int x = 0; x < nl.getLength(); x++)
+			{
+				if(nl.item(x).getNodeName().equals("Input"))
+					count++;
+			}
 			
 		}
 		catch (SAXException | IOException | ParserConfigurationException e){e.printStackTrace();}
@@ -123,36 +136,6 @@ public class ColladaReader
 			if(floatstring[x].length() > 0 && isNumeric(floatstring[x]))
 				texture[x] = Float.parseFloat(floatstring[x]);
 		}
-	}
-	
-	public static float[] read(String f)
-	{
-		String s = "";
-		Document doc;
-		float[] points = new float[1];
-		try
-		{
-			DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-			doc = db.parse(new File(f));
-			
-			NodeList nl = doc.getElementsByTagName("float_array");
-			s = getText(nl.item(1));
-			
-			if(!isNumeric(s.substring(0, 1)))
-				s = s.substring(1);
-			
-			String[] floatstring = s.split("[ \n]");
-			points = new float[floatstring.length];
-			System.out.println(points.length);
-			for(int x = 0; x < points.length; x++)
-			{
-				if(isNumeric(floatstring[x]))
-					points[x] = Float.parseFloat(floatstring[x]);
-			}
-		}
-		catch (SAXException | IOException | ParserConfigurationException e){e.printStackTrace();}
-		
-		return points;
 	}
 	
 	public float[] getVertex()
