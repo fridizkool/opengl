@@ -19,7 +19,9 @@ public class ColladaReader
 	private float[] vertex;
 	private float[] normal;
 	private float[] texture;
-	private int[] polyList;
+	private int[] polyCount;
+	private int[] polys;
+	private PolyList pl;
 	
 	private float transX;
 	private float transY;
@@ -41,7 +43,7 @@ public class ColladaReader
 		vertex = new float[1];
 		normal = new float[1];
 		texture = new float[1];
-		polyList = new int[1];
+		polys = new int[1];
 		file = new File(f);
 		
 		angleX = 0;
@@ -84,6 +86,8 @@ public class ColladaReader
 			{
 				if(nl.item(x).getNodeName().equals("Input"))
 					count++;
+				else if(nl.item(x).getNodeName().equals("vcount"));
+					
 			}
 			
 		}
@@ -130,6 +134,22 @@ public class ColladaReader
 		
 		String[] floatstring = s.split("\\s+");
 		texture = new float[floatstring.length];
+		for(int x = 0; x < texture.length; x++)
+		{
+			//System.out.println(floatstring[x]);
+			if(floatstring[x].length() > 0 && isNumeric(floatstring[x]))
+				texture[x] = Float.parseFloat(floatstring[x]);
+		}
+	}
+
+	private void readVCount(Node n)
+	{
+		String s = getText(n);
+		while(s.length() > 0 && !isNumeric(s.substring(0, 1)))
+			s = s.substring(1);
+		
+		String[] floatstring = s.split("\\s+");
+		polyCount = new int[floatstring.length];
 		for(int x = 0; x < texture.length; x++)
 		{
 			//System.out.println(floatstring[x]);

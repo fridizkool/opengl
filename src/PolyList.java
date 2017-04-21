@@ -22,6 +22,19 @@ public class PolyList implements Iterator<ShapePoints>
 			polygons[x] = new ShapePoints(vcount[x]);
 		}
 	}
+	
+	public PolyList(int[] l, float[] v, float[] n, float[] t, int inputs)
+	{
+		list = l;
+		vertex = v;
+		normal = n;
+		texture = t;
+		polygons = new ShapePoints[v.length / 9];
+		for(int x = 0; x < polygons.length; x++)
+		{
+			polygons[x] = new ShapePoints(3);
+		}
+	}
 
 	@Override
 	public boolean hasNext()
