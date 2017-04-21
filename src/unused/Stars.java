@@ -1,3 +1,5 @@
+package unused;
+
 import static com.jogamp.opengl.GL2.*;
 import static com.jogamp.opengl.GL.*;
 import java.awt.*;
