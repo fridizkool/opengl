@@ -63,7 +63,7 @@ public class TriPoly extends GLCanvas implements GLEventListener, KeyListener, M
 	private static float rotateSpeedX = 0.0f;
 	private static float rotateSpeedY = 0.0f;
 	private static float rotateSpeedZ = 0.0f;
-	private static float zIncrement = 20f;
+	private static float zIncrement = 0.02f;
 	private static float xIncrement = 0.02f;
 	private static float yIncrement = 0.02f;
 	
@@ -84,7 +84,7 @@ public class TriPoly extends GLCanvas implements GLEventListener, KeyListener, M
 	private float textureTop, textureBottom, textureLeft, textureRight;
 	private static boolean isLightOn;
 	
-	private boolean moveModel = false;
+	private boolean moveModel = true;
 	
 	public TriPoly()
 	{
@@ -96,9 +96,9 @@ public class TriPoly extends GLCanvas implements GLEventListener, KeyListener, M
 		this.requestFocus();
 
 //		m.createModel("aaa.dae");
-		m.createModel("cow.dae");
+//		m.createModel("cow.dae");
 //		m.createModel("Table.dae");
-//		m.createModel("Stick_Figure_by_Swp.DAE");
+		m.createModel("cow.dae");
 	}
 	
 	@Override
@@ -123,27 +123,27 @@ public class TriPoly extends GLCanvas implements GLEventListener, KeyListener, M
 		gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 		gl.glShadeModel(GL_SMOOTH);
 		
-		try
-		{
-			BufferedImage image = ImageIO.read(getClass().getClassLoader().getResource(textureFileName));
-			textures[0] = AWTTextureIO.newTexture(GLProfile.getDefault(), image, false);
-			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			
-			textures[1] = AWTTextureIO.newTexture(GLProfile.getDefault(), image, false);
-			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			
-			textures[2] = AWTTextureIO.newTexture(GLProfile.getDefault(), image, true);
-			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-			
-			TextureCoords textureCoords = textures[0].getImageTexCoords();
-			textureTop = textureCoords.top();
-			textureBottom = textureCoords.bottom();
-			textureLeft = textureCoords.left();
-			textureRight = textureCoords.right();
-		}catch (GLException e){e.printStackTrace();}catch (IOException e){e.printStackTrace();}
+//		try
+//		{
+//			BufferedImage image = ImageIO.read(getClass().getClassLoader().getResource(textureFileName));
+//			textures[0] = AWTTextureIO.newTexture(GLProfile.getDefault(), image, false);
+//			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//			
+//			textures[1] = AWTTextureIO.newTexture(GLProfile.getDefault(), image, false);
+//			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//			
+//			textures[2] = AWTTextureIO.newTexture(GLProfile.getDefault(), image, true);
+//			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+//			
+//			TextureCoords textureCoords = textures[0].getImageTexCoords();
+//			textureTop = textureCoords.top();
+//			textureBottom = textureCoords.bottom();
+//			textureLeft = textureCoords.left();
+//			textureRight = textureCoords.right();
+//		}catch (GLException e){e.printStackTrace();}catch (IOException e){e.printStackTrace();}
 		
 		float[] lightAmbientValue = {0.5f, 0.5f, 0.5f, 1.0f};
 		float[] lightDiffuseValue = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -206,7 +206,7 @@ public class TriPoly extends GLCanvas implements GLEventListener, KeyListener, M
 			gl.glEnable(GL_DEPTH_TEST);
 		}
 		
-		shapeSphere(vert, 3, gl);
+		//shapeSphere(vert, 3, gl);
 		
 		m.Render(gl);
 		

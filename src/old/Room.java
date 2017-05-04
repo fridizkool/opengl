@@ -1,5 +1,4 @@
-package unused;
-
+package old;
 import static com.jogamp.opengl.GL2.*;
 import static com.jogamp.opengl.GL.*;
 import java.awt.*;
@@ -19,7 +18,11 @@ import static java.awt.event.KeyEvent.VK_DOWN;
 import static java.awt.event.KeyEvent.VK_LEFT;
 import static java.awt.event.KeyEvent.VK_RIGHT;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Scanner;
+
 import javax.swing.*;
 
 import javax.imageio.ImageIO;
@@ -36,31 +39,39 @@ import com.jogamp.opengl.util.texture.TextureCoords;
 import com.jogamp.opengl.util.texture.awt.AWTTextureIO;
 
 @SuppressWarnings({ "serial", "unused" })
-public class Rotate extends GLCanvas implements GLEventListener, KeyListener
+public class Room extends GLCanvas implements GLEventListener, KeyListener
 {
 	private GLU glu;
 	
-	private static float angleX = 0.0f;
-	private static float angleY = 0.0f;
+	private static float posX = 0.0f;
+	private static float posZ = 0.0f;
 	private static float zp = -5.0f;
 	private static float xp = 0.0f;
 	private static float yp = 0.0f;
-	private static float rotateSpeedX = 0.0f;
-	private static float rotateSpeedY = 0.0f;
-	private static float zIncrement = 0.02f;
-	private static float xIncrement = 0.02f;
-	private static float yIncrement = 0.02f;
-	private static float rotateSpeedXIncrement = 0.01f;
-	private static float rotateSpeedYIncrement = 0.01f;
+//	private static float rotateSpeedX = 0.0f;
+//	private static float rotateSpeedY = 0.0f;
+//	private static float zIncrement = 0.02f;
+//	private static float xIncrement = 0.02f;
+//	private static float yIncrement = 0.02f;
 	private static boolean blendingEnabled;
+	
+	Sector sector;
+	private float headingY = 0;
+	private float lookUpAngle = 0.0f;
+	private float moveIncrement = 0.05f;
+	private float turnIncrement = 1.5f;
+	private float lookUpIncrement = 1.5f;
+	
+	private float walkBias = 0;
+	private float walkBiasAngle = 0;
 	
 	private Texture[] textures = new Texture[3];
 	private static int currTextureFilter = 0;
-	private String textureFileName = "images/kitty face rawr.png";
+	private String textureFileName = "images/mud.png";
 	private float textureTop, textureBottom, textureLeft, textureRight;
 	private static boolean isLightOn;
 	
-	public Rotate()
+	public Room()
 	{
 		this.addGLEventListener(this);
 		this.addKeyListener(this);
@@ -71,7 +82,9 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 	@Override
 	public void display(GLAutoDrawable draw)
 	{
-		render(draw);
+		GL2 gl = draw.getGL().getGL2();
+		gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		render(gl);
 	}
 
 	@Override
@@ -92,6 +105,14 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 		
 		try
 		{
+			setupWorld();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		try
+		{
 			BufferedImage image = ImageIO.read(getClass().getClassLoader().getResource(textureFileName));
 			textures[0] = AWTTextureIO.newTexture(GLProfile.getDefault(), image, false);
 			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -104,6 +125,8 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 			textures[2] = AWTTextureIO.newTexture(GLProfile.getDefault(), image, true);
 			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			
 			TextureCoords textureCoords = textures[0].getImageTexCoords();
 			textureTop = textureCoords.top();
@@ -121,6 +144,8 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 		gl.glEnable(GL_LIGHT1);    // Enable Light-1
 		gl.glDisable(GL_LIGHTING); // But disable lighting
 		isLightOn = false;
+		
+		gl.glEnable(GL_TEXTURE_2D);
 		
 		gl.glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 		gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -147,19 +172,9 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 		
 	}
 	
-	public void render(GLAutoDrawable draw)
-	{
-		GL2 gl = draw.getGL().getGL2();
-		gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		//Cube
+	public void render(GL2 gl)
+	{	
 		gl.glLoadIdentity();
-		gl.glTranslatef(xp, yp, zp);
-		gl.glRotatef(angleX, 1.0f, 0.0f, 0.0f);
-		gl.glRotatef(angleY, 0.0f, 1.0f, 0.0f);
-		
-		textures[currTextureFilter].enable(gl);
-		textures[currTextureFilter].bind(gl);
 		
 		if(isLightOn)
 			gl.glEnable(GL_LIGHTING);
@@ -177,77 +192,84 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 			gl.glEnable(GL_DEPTH_TEST);
 		}
 		
-		gl.glBegin(GL_QUADS);
-		//Front
-		gl.glNormal3f(0.0f, 0.0f, 1.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(-1.0f, -1.0f, 1.0f);
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(1.0f, -1.0f, 1.0f);
-		gl.glTexCoord2f(textureRight, textureTop);
-		gl.glVertex3f(1.0f, 1.0f, 1.0f);
-		gl.glTexCoord2f(textureLeft, textureTop);
-		gl.glVertex3f(-1.0f, 1.0f, 1.0f);
+		gl.glRotatef(lookUpAngle, 1.0f, 0, 0);
+		gl.glRotatef(360.0f - headingY, 0, 1.0f, 0);
+		gl.glTranslatef(-posX, -walkBias - 0.25f, -posZ);
+
+		textures[currTextureFilter].enable(gl);
+		textures[currTextureFilter].bind(gl);
+		for(int i = 0; i < sector.triangles.length; i++)
+		{
+			gl.glBegin(GL_TRIANGLES);
+			gl.glNormal3f(0.0f, 0.0f, 1.0f);
+			float textureHeight = textureTop - textureBottom;
+			float u = sector.triangles[i].vertices[0].u, v = (sector.triangles[i].vertices[0].v * textureHeight - textureBottom);
+			gl.glTexCoord2f(u, v);
+			gl.glVertex3f(sector.triangles[i].vertices[0].x, sector.triangles[i].vertices[0].y, sector.triangles[i].vertices[0].z);
+			
+			u = sector.triangles[i].vertices[1].u;
+			v = sector.triangles[i].vertices[1].v * textureHeight - textureBottom;
+			gl.glTexCoord2f(u, v);
+			gl.glVertex3f(sector.triangles[i].vertices[1].x, sector.triangles[i].vertices[1].y, sector.triangles[i].vertices[1].z);
+			
+			u = sector.triangles[i].vertices[2].u;
+			v = sector.triangles[i].vertices[2].v * textureHeight - textureBottom;
+			gl.glTexCoord2f(u, v);
+			gl.glVertex3f(sector.triangles[i].vertices[2].x, sector.triangles[2].vertices[1].y, sector.triangles[i].vertices[2].z);
+			
+			gl.glEnd();
+		}
+	}
+	
+	private void setupWorld() throws IOException
+	{
+		BufferedReader in = null;
 		
-		//Back
-		gl.glNormal3f(0.0f, 0.0f, -1.0f);
-		gl.glTexCoord2f(textureRight, textureTop);
-		gl.glVertex3f(-1.0f, -1.0f, -1.0f);
-		gl.glTexCoord2f(textureLeft, textureTop);
-		gl.glVertex3f(1.0f, -1.0f, -1.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(1.0f, 1.0f, -1.0f);
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(-1.0f, 1.0f, -1.0f);
-		
-		//Top
-		gl.glNormal3f(0.0f, 1.0f, 0.0f);
-		gl.glTexCoord2f(textureLeft, textureTop);
-		gl.glVertex3f(-1.0f, 1.0f, -1.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(-1.0f, 1.0f, 1.0f);
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(1.0f, 1.0f, 1.0f);
-		gl.glTexCoord2f(textureRight, textureTop);
-		gl.glVertex3f(1.0f, 1.0f, -1.0f);
-		
-		//Bottom
-		gl.glNormal3f(0.0f, -1.0f, 0.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(-1.0f, -1.0f, -1.0f);
-		gl.glTexCoord2f(textureLeft, textureTop);
-		gl.glVertex3f(-1.0f, -1.0f, 1.0f);
-		gl.glTexCoord2f(textureRight, textureTop);
-		gl.glVertex3f(1.0f, -1.0f, 1.0f);
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(1.0f, -1.0f, -1.0f);
-		
-		//Left
-		gl.glNormal3f(-1.0f, 0.0f, 0.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(-1.0f, -1.0f, -1.0f);
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(-1.0f, -1.0f, 1.0f);
-		gl.glTexCoord2f(textureRight, textureTop);
-		gl.glVertex3f(-1.0f, 1.0f, 1.0f);
-		gl.glTexCoord2f(textureLeft, textureTop);
-		gl.glVertex3f(-1.0f, 1.0f, -1.0f);
-		
-		//Right
-		gl.glNormal3f(1.0f, 0.0f, 0.0f);
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(1.0f, -1.0f, -1.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(1.0f, -1.0f, 1.0f);
-		gl.glTexCoord2f(textureLeft, textureTop);
-		gl.glVertex3f(1.0f, 1.0f, 1.0f);
-		gl.glTexCoord2f(textureRight, textureTop);
-		gl.glVertex3f(1.0f, 1.0f, -1.0f);
-		
-		gl.glEnd();
-		
-		angleX += rotateSpeedX;
-		angleY += rotateSpeedY;
+		try
+		{
+			in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("models/world.txt")));
+			String line = in.readLine();
+			while((line = in.readLine()) != null)
+			{
+				if(line.trim().length() == 0 || line.trim().startsWith("//"))
+					continue;
+				if(line.startsWith("NUMPOLLIES"))
+				{
+					int t = Integer.parseInt(line.substring(line.indexOf("NUMPOLLIES") + "NUMPOLLIES".length() + 1));
+					sector = new Sector(t);
+					break;
+				}
+				
+				for(int i = 0; i < sector.triangles.length; i++)
+				{
+					for(int vert = 0; vert < 3; vert++)
+					{
+						line = in.readLine();
+						while((line = in.readLine()) != null)
+						{
+							if(line.trim().length() == 0 || line.trim().startsWith("//"))
+								continue;
+							break;
+						}
+						if(line != null)
+						{
+							Scanner scanner = new Scanner(line);
+							sector.triangles[i].vertices[vert].x = scanner.nextFloat();
+							sector.triangles[i].vertices[vert].y = scanner.nextFloat();
+							sector.triangles[i].vertices[vert].z = scanner.nextFloat();
+							sector.triangles[i].vertices[vert].u = scanner.nextFloat();
+							sector.triangles[i].vertices[vert].v = scanner.nextFloat();
+							scanner.close();
+						}
+					}
+				}
+			}
+		}
+		finally
+		{
+			if(in != null)
+				in.close();
+		}
 	}
 
 	@Override
@@ -257,34 +279,46 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 		switch(keyCode)
 		{
 			case VK_W:
-				rotateSpeedX -= rotateSpeedXIncrement;
+				posX -= (float)Math.sin(Math.toRadians(headingY)) * moveIncrement;
+				posZ -= (float)Math.cos(Math.toRadians(headingY)) * moveIncrement;
+				walkBiasAngle = (walkBiasAngle >= 359.0f) ? 0.0f : walkBiasAngle + 10.0f;
+				walkBias = (float)Math.sin(Math.toRadians(walkBiasAngle)) / 20.0f;
+//				rotateSpeedX -= rotateSpeedXIncrement;
 				break;
 			case VK_S:
-				rotateSpeedX += rotateSpeedXIncrement;
+				posX += (float)Math.sin(Math.toRadians(headingY)) * moveIncrement;
+				posZ += (float)Math.cos(Math.toRadians(headingY)) * moveIncrement;
+				walkBiasAngle = (walkBiasAngle <= 1.0f) ? 359.0f : walkBiasAngle - 10.0f;
+				walkBias = (float)Math.sin(Math.toRadians(walkBiasAngle)) / 20.0f;
+//				rotateSpeedX += rotateSpeedXIncrement;
 				break;
 			case VK_A:
-				rotateSpeedY -= rotateSpeedYIncrement;
+				headingY += turnIncrement;
+//				rotateSpeedY -= rotateSpeedYIncrement;
 				break;
 			case VK_D:
-				rotateSpeedY += rotateSpeedYIncrement;
+				headingY -= turnIncrement;
+//				rotateSpeedY += rotateSpeedYIncrement;
 				break;
 			case VK_PAGE_UP:
-				zp -= zIncrement;
+				lookUpAngle -= lookUpIncrement;
+//				zp -= zIncrement;
 				break;
 			case VK_PAGE_DOWN:
-				zp += zIncrement;
+				lookUpAngle += lookUpIncrement;
+//				zp += zIncrement;
 				break;
 			case VK_UP:
-				yp += yIncrement;
+//				yp += yIncrement;
 				break;
 			case VK_DOWN:
-				yp -= yIncrement;
+//				yp -= yIncrement;
 				break;
 			case VK_LEFT:
-				xp -= xIncrement;
+//				xp -= xIncrement;
 				break;
 			case VK_RIGHT:
-				xp += xIncrement;
+//				xp += xIncrement;
 				break;
 			case VK_L:
 				isLightOn = !isLightOn;
@@ -299,63 +333,45 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 				isLightOn = false;
 				blendingEnabled = true;
 				currTextureFilter = 0;
-				rotateSpeedX = 0.0f;
-				rotateSpeedY = 0.0f;
+//				rotateSpeedX = 0.0f;
+//				rotateSpeedY = 0.0f;
 				xp = 0.0f;
 				yp = 0.0f;
 				zp = -5.0f;
-				angleX = 0.0f;
-				angleY = 0.0f;
 				break;
 		}
 	}
 	public void keyReleased(KeyEvent e){}
 	public void keyTyped(KeyEvent e){}
 }
-/*
-	 	//Pyramid
-		gl.glLoadIdentity();
-		gl.glTranslatef(-1.6f, 0.0f, -6.0f);
-		textures[currTextureFilter].enable(gl);
-		textures[currTextureFilter].bind(gl);
-		gl.glBegin(GL_TRIANGLES);
-		
-		if (isLightOn)
-			gl.glEnable(GL_LIGHTING);
-		else
-			gl.glDisable(GL_LIGHTING);
-		
-		//Front
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(1.0f, 0.0f, 1.0f);
-		gl.glTexCoord2f(textureTop, textureTop);
-		gl.glVertex3f(0.0f, 1.0f, 0.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(-1.0f, 0.0f, 1.0f);
-		
-		//Left
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(-1.0f, 0.0f, 1.0f);
-		gl.glTexCoord2f(textureTop, textureTop);
-		gl.glVertex3f(0.0f, 1.0f, 0.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(0.0f, 0.0f, -1.0f);
-		
-		//Right
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(0.0f, 0.0f, -1.0f);
-		gl.glTexCoord2f(textureTop, textureTop);
-		gl.glVertex3f(0.0f, 1.0f, 0.0f);
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(1.0f, 0.0f, 1.0f);
-		
-		//Bottom
-		gl.glTexCoord2f(textureLeft, textureBottom);
-		gl.glVertex3f(-1.0f, 0.0f, 1.0f);
-		gl.glTexCoord2f(textureTop, textureTop);
-		gl.glVertex3f(0.0f, 0.0f, -1.0f);
-		gl.glTexCoord2f(textureRight, textureBottom);
-		gl.glVertex3f(1.0f, 0.0f, 1.0f);
-		
-		gl.glEnd();
-		*/
+
+class Sector {
+   Triangle[] triangles;
+
+   // Constructor
+   public Sector(int numTriangles) {
+      triangles = new Triangle[numTriangles];
+      for (int i = 0; i < numTriangles; i++) {
+         triangles[i] = new Triangle();
+      }
+   }
+}
+
+class Triangle {
+   Vertex[] vertices = new Vertex[3];
+
+   public Triangle() {
+      vertices[0] = new Vertex();
+      vertices[1] = new Vertex();
+      vertices[2] = new Vertex();
+   }
+}
+
+class Vertex {
+   float x, y, z; // 3D x,y,z location
+   float u, v; // 2D texture coordinates
+
+   public String toString() {
+      return "(" + x + "," + y + "," + z + ")" + "(" + u + "," + v + ")";
+   }
+}

@@ -31,6 +31,8 @@ public class Model
 	public float rotateSpeedY;
 	public float rotateSpeedZ;
 	
+	public Polylist p;
+	
 	private ColladaReader collada;
 	
 	public Model()
@@ -40,8 +42,8 @@ public class Model
 		angleZ = 0;
 		
 		xp = 0;
-		yp = -10;
-		zp = -80;
+		yp = 0;
+		zp = -5;
 		
 		rotateSpeedX = 0.0f;
 		rotateSpeedY = 0.0f;
@@ -62,20 +64,20 @@ public class Model
 		collada = new ColladaReader(f);
 		float[] floats = collada.getVertex();
 		
-		if(floats.length % 3 == 0)
-		{
-			if(floats.length % 9 == 0)
-				triangleModel(floats);
-			else if(floats.length % 12 == 0)
-				quadModel(floats);
-			else
-				polygonModel(floats, GCF(floats.length / 3));
-		}
-		else
-			System.out.println("impossible");
-		
-		System.out.println(triangles.length);
-		System.out.println(floats.length + " : " + (floats.length / 3) + " : " + GCF(floats.length / 3));
+//		if(floats.length % 3 == 0)
+//		{
+//			if(floats.length % 9 == 0)
+//				triangleModel(floats);
+//			else if(floats.length % 12 == 0)
+//				quadModel(floats);
+//			else
+//				polygonModel(floats, GCF(floats.length / 3));
+//		}
+//		else
+//			System.out.println("impossible");
+//		
+//		System.out.println(triangles.length);
+//		System.out.println(floats.length + " : " + (floats.length / 3) + " : " + GCF(floats.length / 3));
 	}
 	
 	public void triangleModel(float[] floats)
@@ -95,7 +97,7 @@ public class Model
 			while(y < floats.length && triangles[x].getCur() < 3)
 			{
 				System.out.println("Y: x " + floats[y] + ", y " + floats[y + 1] + ", z " + floats[y + 2]);
-				triangles[x].xyz(floats[y], floats[y + 1], floats[y + 2]);
+				triangles[x].Vxyz(floats[y], floats[y + 1], floats[y + 2]);
 				y += 3;
 			}
 			
@@ -120,7 +122,7 @@ public class Model
 			triangles[x] = new ShapePoints(4);
 			while(triangles[x].getCur() < 4)
 			{
-				triangles[x].xyz(floats[y], floats[y + 1], floats[y + 2]);
+				triangles[x].Vxyz(floats[y], floats[y + 1], floats[y + 2]);
 				y += 3;
 			}
 		}
@@ -144,7 +146,7 @@ public class Model
 			triangles[x] = new ShapePoints(verts);
 			while(triangles[x].getCur() < 3)
 			{
-				triangles[x].xyz(floats[y], floats[y + 1], floats[y + 2]);
+				triangles[x].Vxyz(floats[y], floats[y + 1], floats[y + 2]);
 				y += 3;
 			}
 		}
@@ -175,16 +177,26 @@ public class Model
 			gl.glEnable(GL_DEPTH_TEST);
 		}
 		
-		gl.glBegin(currentType);
+		p = collada.getPoly();
+		ShapePoints d = p.next();
 		
-		for(ShapePoints a : triangles)
+		while(p.hasNext())
 		{
-			for(int b = 0; b < a.getPoints(); b++)
+			if(d.getPoints() == 3)
+				gl.glBegin(GL2.GL_TRIANGLES);
+			else if(d.getPoints() == 4)
+				gl.glBegin(GL2.GL_QUADS);
+			else
+				gl.glBegin(GL2.GL_POLYGON);
+			for(int b = 0; b < d.getPoints(); b++)
 			{
-				//System.out.println(a.x[b] + ", " + a.y[b] + ", " + a.z[b]);
-				gl.glColor3f(a.x[b], a.y[b], a.z[b]);
-				gl.glVertex3f(a.x[b], a.y[b], a.z[b]);
+				gl.glColor3f(d.x[b], d.y[b], d.z[b]);
+				gl.glVertex3f(d.x[b], d.y[b], d.z[b]);
 			}
+			int a = d.getPoints();
+			d = p.next();
+			if(a != d.getPoints())
+				gl.glEnd();
 		}
 		gl.glEnd();
 		
