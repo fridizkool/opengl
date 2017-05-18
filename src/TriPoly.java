@@ -94,11 +94,12 @@ public class TriPoly extends GLCanvas implements GLEventListener, KeyListener, M
 		this.addMouseMotionListener(this);
 		this.setFocusable(true);
 		this.requestFocus();
-
+		
 //		m.createModel("aaa.dae");
+//		m.createModel("plane.dae");
+		m.createModel("met.dae");
 //		m.createModel("cow.dae");
 //		m.createModel("Table.dae");
-		m.createModel("cow.dae");
 	}
 	
 	@Override
@@ -206,9 +207,11 @@ public class TriPoly extends GLCanvas implements GLEventListener, KeyListener, M
 			gl.glEnable(GL_DEPTH_TEST);
 		}
 		
+		gl.glViewport(0, 0, this.getWidth(), this.getHeight());
+		
 		//shapeSphere(vert, 3, gl);
 		
-		m.Render(gl);
+		m.Render(gl, this.getWidth(), this.getHeight());
 		
 		angleX += rotateSpeedX;
 		angleY += rotateSpeedY;

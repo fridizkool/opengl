@@ -43,7 +43,7 @@
 							<param name="X" type="float"/>
 							<param name="Y" type="float"/>
 							<param name="Z" type="float"/>
-						</accessor>
+						</accessor> 
 					</technique_common>
 				</source>
 				<source id="ID8">

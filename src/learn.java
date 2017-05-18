@@ -24,7 +24,7 @@ public class learn
 	        	GLCanvas canvas = new TriPoly();
 	        	canvas.setPreferredSize(new Dimension(CANVAS_WIDTH, CANVAS_HEIGHT));
 				final FPSAnimator animator = new FPSAnimator(canvas, FPS, true);
-				final JFrame frame = new JFrame("Da game");
+				final JFrame frame = new JFrame("Renderer");
 				frame.getContentPane().add(canvas);
 				
 				frame.addWindowListener(new WindowAdapter()

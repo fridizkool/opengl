@@ -31,7 +31,7 @@ public class Model
 	public float rotateSpeedY;
 	public float rotateSpeedZ;
 	
-	public Polylist p;
+	public Polylist[] Polys;
 	
 	private ColladaReader collada;
 	
@@ -62,99 +62,11 @@ public class Model
 	public void createModel(String f)
 	{
 		collada = new ColladaReader(f);
-		float[] floats = collada.getVertex();
-		
-//		if(floats.length % 3 == 0)
-//		{
-//			if(floats.length % 9 == 0)
-//				triangleModel(floats);
-//			else if(floats.length % 12 == 0)
-//				quadModel(floats);
-//			else
-//				polygonModel(floats, GCF(floats.length / 3));
-//		}
-//		else
-//			System.out.println("impossible");
-//		
-//		System.out.println(triangles.length);
-//		System.out.println(floats.length + " : " + (floats.length / 3) + " : " + GCF(floats.length / 3));
+		Polys = new Polylist[collada.getPolys().size()];
+		Polys = collada.getPolys().toArray(Polys);
 	}
 	
-	public void triangleModel(float[] floats)
-	{
-		if(floats.length % 9 != 0)
-		{
-			System.out.println("Not a triangle");
-			return;
-		}
-		System.out.println("TRIANGLE");
-		triangles = new ShapePoints[floats.length / 9];
-		int y = 0;
-		
-		for(int x = 0; x < triangles.length; x++)
-		{
-			triangles[x] = new ShapePoints(3);
-			while(y < floats.length && triangles[x].getCur() < 3)
-			{
-				System.out.println("Y: x " + floats[y] + ", y " + floats[y + 1] + ", z " + floats[y + 2]);
-				triangles[x].Vxyz(floats[y], floats[y + 1], floats[y + 2]);
-				y += 3;
-			}
-			
-		}
-		
-		currentType = GL2.GL_TRIANGLES;
-	}
-	
-	public void quadModel(float[] floats)
-	{
-		if(floats.length % 12 != 0)
-		{
-			System.out.println("Not a quad");
-			return;
-		}
-		System.out.println("QUAD");
-		triangles = new ShapePoints[floats.length / 12];
-		int y = 0;
-		
-		for(int x = 0; x < triangles.length; x++)
-		{
-			triangles[x] = new ShapePoints(4);
-			while(triangles[x].getCur() < 4)
-			{
-				triangles[x].Vxyz(floats[y], floats[y + 1], floats[y + 2]);
-				y += 3;
-			}
-		}
-		
-		currentType = GL2.GL_QUADS;
-	}
-	
-	public void polygonModel(float[] floats, int verts)
-	{
-		if(floats.length % (verts * 3) != 0)
-		{
-			System.out.println("Not the right polygon");
-			return;
-		}
-		System.out.println("POLYGON");
-		triangles = new ShapePoints[floats.length / (verts * 3)];
-		int y = 0;
-		
-		for(int x = 0; x < triangles.length; x++)
-		{
-			triangles[x] = new ShapePoints(verts);
-			while(triangles[x].getCur() < 3)
-			{
-				triangles[x].Vxyz(floats[y], floats[y + 1], floats[y + 2]);
-				y += 3;
-			}
-		}
-		
-		currentType = GL2.GL_POLYGON;
-	}
-	
-	public void Render(GL2 gl)
+	public void Render(GL2 gl, int width, int height)
 	{
 		gl.glLoadIdentity();
 		gl.glTranslatef(xp, yp, zp);
@@ -177,26 +89,30 @@ public class Model
 			gl.glEnable(GL_DEPTH_TEST);
 		}
 		
-		p = collada.getPoly();
-		ShapePoints d = p.next();
-		
-		while(p.hasNext())
+		ShapePoints d = null;
+		float ratio = width / height;
+//		gl.glFrustum(Polys[0].smallX * ratio, Polys[0].largeX * ratio, Polys[0].smallY, Polys[0].largeY, Polys[0].largeZ, Polys[0].smallZ);
+		for(Polylist po : Polys)
 		{
-			if(d.getPoints() == 3)
-				gl.glBegin(GL2.GL_TRIANGLES);
-			else if(d.getPoints() == 4)
-				gl.glBegin(GL2.GL_QUADS);
-			else
-				gl.glBegin(GL2.GL_POLYGON);
-			for(int b = 0; b < d.getPoints(); b++)
+			d = po.next();
+			while(po.hasNext())
 			{
-				gl.glColor3f(d.x[b], d.y[b], d.z[b]);
-				gl.glVertex3f(d.x[b], d.y[b], d.z[b]);
+				if(d.getPoints() == 3)
+					gl.glBegin(GL2.GL_TRIANGLES);
+				else if(d.getPoints() == 4)
+					gl.glBegin(GL2.GL_QUADS);
+				else
+					gl.glBegin(GL2.GL_POLYGON);
+				
+				for(int b = 0; b < d.getPoints(); b++)
+				{
+					gl.glColor3f(d.x[b] * ratio, d.y[b] * ratio, d.z[b] * ratio);
+					gl.glVertex3f(d.x[b] * ratio, d.y[b] * ratio, d.z[b] * ratio);
+				}
+				d = po.next();
+//				if(a != d.getPoints())
+					gl.glEnd();
 			}
-			int a = d.getPoints();
-			d = p.next();
-			if(a != d.getPoints())
-				gl.glEnd();
 		}
 		gl.glEnd();
 		

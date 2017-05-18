@@ -1,10 +1,21 @@
+import java.util.ArrayList;
 import java.util.Iterator;
+
+import ColladaObjects.Geometry;
+import ColladaObjects.Mesh;
+import ColladaObjects.PolyList;
+import ColladaObjects.Source;
 
 public class Polylist implements Iterator<ShapePoints>
 {
+	private Geometry Geo;
+	private Mesh Me;
+	private ArrayList<Source> Src;
+	private PolyList polylist;
+	
 	private int[] vcount;
 	private int[] list;
-	private ShapePoints vertex;
+	public ShapePoints vertex;
 	private ShapePoints normal;
 	private ShapePoints texture;
 	private ShapePoints[] polygons;
@@ -19,7 +30,18 @@ public class Polylist implements Iterator<ShapePoints>
 	public static float smallZ = Integer.MAX_VALUE;
 	
 	
-	public Polylist(int[] co, int[] pol, float[] v, float[] n, float[] t, int inputs)
+	public Polylist(Geometry geo)
+	{
+		Geo = geo;
+		
+		Me = Geo.mesh;
+		Src = Me.source;
+		polylist = Me.polylist;
+		
+		create(polylist.VCount, polylist.Polys, Src.get(0).floatarray.Arr, Src.get(1).floatarray.Arr, Src.get(2).floatarray.Arr, polylist.Inputs.length);
+	}
+	
+	public void create(int[] co, int[] pol, float[] v, float[] n, float[] t, int inputs)
 	{
 		cur = -1;
 		vcount = co;
@@ -31,22 +53,22 @@ public class Polylist implements Iterator<ShapePoints>
 		vertex = createV(v);
 		normal = createN(n);
 		texture = createT(t);
-		
+		System.out.println(inputs);
 		for(int x = 0; x < polygons.length; x++)
 		{
 			polygons[x] = new ShapePoints(vcount[x]);
-			for(int y = current; y < current + (inputs * vcount[x]); y+=inputs)
+			for(int y = current; y < list.length && y < current + (inputs * vcount[x]); y+=inputs)
 			{
-				System.out.println(y);
+				//System.out.println(y);
 				if(inputs > 0)
-					polygons[x].Vxyz(vertex.x[list[y]] / (largeX * 2), 2 * vertex.y[list[y]] / largeY, vertex.z[list[y]] / largeZ);	//Create vertexes
-				if(inputs > 1)
-					polygons[x].Nxyz(normal.x[list[y + 1]], normal.y[list[y + 1]], normal.z[list[y + 1]]);	//Create normals
-				if(inputs > 2)
-					polygons[x].Tst(texture.s[list[y + 2]], texture.t[list[y + 2]]);	//Create polygons
+					polygons[x].Vxyz(vertex.x[list[y]], vertex.y[list[y]], vertex.z[list[y]]);	//Create vertexes
+//				if(inputs > 1)
+//					polygons[x].Nxyz(normal.x[list[y + 1]], normal.y[list[y + 1]], normal.z[list[y + 1]]);	//Create normals
+//				if(inputs > 2)
+//					polygons[x].Tst(texture.s[list[y + 2]], texture.t[list[y + 2]]);	//Create textures
 			}
 			current += inputs * vcount[x];
-			System.out.println(polygons[x].toString());
+//			System.out.println(polygons[x].toString());
 		}
 		
 	}
