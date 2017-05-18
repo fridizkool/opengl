@@ -55,7 +55,7 @@ public class Rotate extends GLCanvas implements GLEventListener, KeyListener
 	
 	private Texture[] textures = new Texture[3];
 	private static int currTextureFilter = 0;
-	private String textureFileName = "images/kitty face rawr.png";
+	private String textureFileName = "images/glass.png";
 	private float textureTop, textureBottom, textureLeft, textureRight;
 	private static boolean isLightOn;
 	

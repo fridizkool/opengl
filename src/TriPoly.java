@@ -209,9 +209,9 @@ public class TriPoly extends GLCanvas implements GLEventListener, KeyListener, M
 		
 		gl.glViewport(0, 0, this.getWidth(), this.getHeight());
 		
-		//shapeSphere(vert, 3, gl);
+		shapeSphere(vert, 3, gl);
 		
-		m.Render(gl, this.getWidth(), this.getHeight());
+		//m.Render(gl, this.getWidth(), this.getHeight());
 		
 		angleX += rotateSpeedX;
 		angleY += rotateSpeedY;

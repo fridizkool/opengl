@@ -56,7 +56,7 @@ public class Stars extends GLCanvas implements GLEventListener, KeyListener
 	
 	private static boolean twinkleOn = true;
 	public static final int numStars = 50;
-	private Star[] stars = new Star[numStars];
+	private Star[] stars;
 	
 	private Texture[] textures = new Texture[3];
 	private static int currTextureFilter = 0;
@@ -72,15 +72,7 @@ public class Stars extends GLCanvas implements GLEventListener, KeyListener
 		this.requestFocus();
 	}
 	
-	@Override
-	public void display(GLAutoDrawable draw)
-	{
-		render(draw);
-	}
 
-	@Override
-	public void dispose(GLAutoDrawable auto)
-	{}
 
 	@Override
 	public void init(GLAutoDrawable auto)
@@ -135,13 +127,23 @@ public class Stars extends GLCanvas implements GLEventListener, KeyListener
 		gl.glDisable(GL_DEPTH_TEST);
 		gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		blendingEnabled = true;
+		stars = new Star[numStars];
 		for(int i = 0; i < stars.length; i++)
 		{
 			stars[i] = new Star();
 			stars[i].distance = ((float)i / numStars) * 5.0f;
 		}
 	}
+	
+	@Override
+	public void display(GLAutoDrawable draw)
+	{
+		render(draw);
+	}
 
+	@Override
+	public void dispose(GLAutoDrawable auto)
+	{}
 	@Override
 	public void reshape(GLAutoDrawable auto, int x, int y, int 	width, int height)
 	{
@@ -203,7 +205,7 @@ public class Stars extends GLCanvas implements GLEventListener, KeyListener
 			}
 			
 			starSpinAngle += 0.01f;
-			stars[i].angle += (float)i / numStars;
+			stars[i].angle += (float) i / numStars;
 			stars[i].distance -= 0.01f;
 			if(stars[i].distance < 0.0f)
 			{
@@ -275,32 +277,5 @@ public class Stars extends GLCanvas implements GLEventListener, KeyListener
 	}
 	public void keyReleased(KeyEvent e){}
 	public void keyTyped(KeyEvent e){}
-}
-
-class Star
-{
-    // public access for simplicity
-    public byte r, g, b;   // RGB values for the star
-    public float distance; // distance from the center
-    public float angle;    // current angle about the center
-
-    private Random rand = new Random();
-
-    // Constructor
-    public Star()
-    {
-       angle = 0.0f;
-       r = (byte)rand.nextInt(256);
-       g = (byte)rand.nextInt(256);
-       b = (byte)rand.nextInt(256);
-    }
-
-    // Set the RGB color of this star to some random values
-    public void setRandomRGB()
-    {
-       r = (byte)rand.nextInt(256);
-       g = (byte)rand.nextInt(256);
-       b = (byte)rand.nextInt(256);
-    }
 }
 

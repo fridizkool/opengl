@@ -21,10 +21,10 @@ public class learn
 		{
 	         public void run()
 	         {
-	        	GLCanvas canvas = new TriPoly();
+	        	GLCanvas canvas = new old.Rotate();
 	        	canvas.setPreferredSize(new Dimension(CANVAS_WIDTH, CANVAS_HEIGHT));
 				final FPSAnimator animator = new FPSAnimator(canvas, FPS, true);
-				final JFrame frame = new JFrame("Renderer");
+				final JFrame frame = new JFrame("Rendererererererer");
 				frame.getContentPane().add(canvas);
 				
 				frame.addWindowListener(new WindowAdapter()
